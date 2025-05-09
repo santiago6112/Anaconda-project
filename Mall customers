@@ -1,0 +1,156 @@
+import os
+os.environ["OMP_NUM_THREADS"] = "1"
+
+import warnings
+warnings.filterwarnings("ignore", message="KMeans is known to have a memory leak on Windows with MKL")
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.cluster import KMeans
+from sklearn.metrics import silhouette_score
+
+df = pd.read_csv('D:\\Users\\ASUS\\Downloads\\archive (4)\\Mall_Customers.csv')  
+df.head()
+
+df.describe()
+
+nivel_minimo=0
+nivel_maximo=100
+Total_Atipicos=((df['Spending_Score']<nivel_minimo)|(df['Spending_Score']>nivel_maximo)).sum()
+print("El total de datos atípicos es {}".format(Total_Atipicos))
+
+df=df[(df['Spending_Score']<nivel_maximo)&(df['Spending_Score']>nivel_minimo)]
+
+df.info()
+
+df = df[["Age","Annual_Income","Spending_Score"]]
+df.head(10)
+
+df.rename(columns={
+    'Genre': 'Gender',
+    'Annual Income (k$)': 'Annual_Income',
+    'Spending Score (1-100)': 'Spending_Score'
+}, inplace=True)
+
+le = LabelEncoder()
+df['Gender'] = le.fit_transform(df['Gender'])  
+
+features = df[['Gender', 'Age', 'Annual_Income', 'Spending_Score']]
+
+scaler = StandardScaler()
+scaled_features = scaler.fit_transform(features)
+
+Modelo = KMeans(n_clusters=5, random_state=0)
+Modelo.fit(df)
+
+Modelo.labels_
+df["Grupo"] = Modelo.labels_ 
+print (df)
+
+print("Evaluación K-means:")
+print("Silhouette Score:", silhouette_score(scaled_features, kmeans_labels))
+print("Calinski-Harabasz Index:", calinski_harabasz_score(scaled_features, kmeans_labels))
+print("Davies-Bouldin Index:", davies_bouldin_score(scaled_features, kmeans_labels))
+
+print("\nEvaluación Clustering Jerárquico:")
+print("Silhouette Score:", silhouette_score(scaled_features, hierarchical_labels))
+print("Calinski-Harabasz Index:", calinski_harabasz_score(scaled_features, hierarchical_labels))
+print("Davies-Bouldin Index:", davies_bouldin_score(scaled_features, hierarchical_labels))
+
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+plt.figure(figsize=(6, 3))
+sns.boxplot(x=df['Annual_Income'])  
+
+plt.title('Identificación de Datos Faltantes y Atípicos', fontsize=10)
+plt.show()
+
+nc = range(1, 8)
+kmeans = [KMeans(n_clusters=i) for i in nc]
+kmeans
+score = [kmeans[i].fit(df).score(df) for i in range(len(kmeans))]
+score
+plt.plot(nc,score, marker='o')
+plt.xlabel('Número de Clusters')
+plt.ylabel('Score')
+plt.title('Gráfica de Codo')
+plt.show()
+
+plt.scatter(df['Annual_Income'], df['Spending_Score'], c=df['Grupo'], cmap='viridis')
+plt.xlabel('Ingreso Anual')
+plt.ylabel('Puntuación de Gasto')
+plt.title('Grupos de Clientes')
+plt.show()
+
+import plotly.express as px
+
+Grafica_3D = px.scatter_3d(
+    df,
+    x='Annual_Income',
+    y='Spending_Score',
+    z='Age',
+    color='Grupo',
+    symbol='Grupo',
+    symbol_map={0: 'circle', 1: 'circle', 2: 'circle', 3: 'circle', 4: 'circle', 5: 'circle'},
+    opacity=0.7,
+    width=900,
+    height=850,
+    title='Modelo de K-Means con un k=5',
+    labels={'label': 'Cluster'},
+    color_discrete_map={}
+)
+
+Grafica_3D.update_layout(showlegend=False)
+Grafica_3D.show()
+
+import pandas as pd
+from sklearn.cluster import AgglomerativeClustering
+from scipy.cluster.hierarchy import dendrogram, linkage
+import matplotlib.pyplot as plt
+from sklearn.metrics import silhouette_score, davies_bouldin_score, calinski_harabasz_score
+
+df.columns = (
+    df.columns
+    .str.strip()
+    .str.lower()
+    .str.replace(' ', '_')
+    .str.replace(r'[^\w\s]', '', regex=True)
+)
+
+print(df.columns.tolist())
+
+
+x = df[['annual_income_k', 'age']].values
+
+import pandas as pd
+
+
+df = pd.read_csv(r'D:\Users\ASUS\Downloads\archive (4)\Mall_Customers.csv')
+
+
+print("Columnas disponibles:", df.columns.tolist())
+
+linked = linkage(x, 'average')
+
+plt.figure(figsize=(10, 7))
+dendrogram(linked, orientation='top', labels=df['Annual Income (k$)'].values, distance_sort='descending', show_leaf_counts=True)
+plt.title('Dendograma Jerarquio con salario anuel y fechas')
+plt.show()
+
+clustering = AgglomerativeClustering(n_clusters=4, linkage='average')
+clustering.fit(x)
+
+df['Cluster']=clustering.labels_
+
+silhouette_avg = silhouette_score(x, clustering.labels_)
+davies_bouldin = davies_bouldin_score(x, clustering.labels_)
+calinski_harabaz = calinski_harabasz_score(x, clustering.labels_)
+
+print(f"coeficiente de silueta: {silhouette_avg}")
+print(f"indice de Davies-Bouldin: {silhouette_avg}")
+print(f"coeficiente de Calinski-Karabasz: {calinski_harabaz}")

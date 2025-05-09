@@ -1,0 +1,17 @@
+plt.figure(figsize=(10, 7))
+dendrogram(linked, orientation='top', labels=df['Annual Income (k$)'].values, distance_sort='descending', show_leaf_counts=True)
+plt.title('Dendograma Jerarquio con salario anuel y fechas')
+plt.show()
+
+clustering = AgglomerativeClustering(n_clusters=4, linkage='average')
+clustering.fit(x)
+
+df['Cluster']=clustering.labels_
+
+silhouette_avg = silhouette_score(x, clustering.labels_)
+davies_bouldin = davies_bouldin_score(x, clustering.labels_)
+calinski_harabaz = calinski_harabasz_score(x, clustering.labels_)
+
+print(f"coeficiente de silueta: {silhouette_avg}")
+print(f"indice de Davies-Bouldin: {silhouette_avg}")
+print(f"coeficiente de Calinski-Karabasz: {calinski_harabaz}")
